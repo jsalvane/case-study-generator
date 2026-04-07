@@ -42,6 +42,7 @@ export default function CaseStudyForm() {
     challenge: '',
     solution: '',
     result: '',
+    title: '',
   })
   const [images, setImages] = useState([])
   const [errors, setErrors] = useState({})
@@ -49,10 +50,42 @@ export default function CaseStudyForm() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [expandedExample, setExpandedExample] = useState(null)
+  const [generatingTitle, setGeneratingTitle] = useState(false)
+  const [titleError, setTitleError] = useState('')
 
   function update(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
+  }
+
+  async function generateTitle() {
+    if (form.challenge.trim().length < 50 || form.solution.trim().length < 50 || form.result.trim().length < 50) {
+      setTitleError('Fill in Challenge, Solution, and Result first (at least 50 characters each).')
+      return
+    }
+    setTitleError('')
+    setGeneratingTitle(true)
+    try {
+      const res = await fetch('/api/generate-title', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          productLine: form.productLine,
+          industry: form.industry,
+          product: form.product,
+          challenge: form.challenge,
+          solution: form.solution,
+          result: form.result,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Generation failed')
+      update('title', data.title)
+    } catch (err) {
+      setTitleError(err.message || 'Could not generate title. Please try again.')
+    } finally {
+      setGeneratingTitle(false)
+    }
   }
 
   function validate() {
@@ -88,12 +121,28 @@ export default function CaseStudyForm() {
       images.forEach(img => formData.append('images', img.compressed, img.name))
 
       const res = await fetch('/api/submit', { method: 'POST', body: formData })
-      const data = await res.json()
 
-      if (!res.ok) throw new Error(data.error || 'Submission failed')
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Submission failed')
+      }
+
+      const contentType = res.headers.get('Content-Type') || ''
+      if (contentType.includes('presentationml') || contentType.includes('octet-stream')) {
+        const blob = await res.blob()
+        const disposition = res.headers.get('Content-Disposition') || ''
+        const match = disposition.match(/filename="([^"]+)"/)
+        const filename = match ? match[1] : 'Case_Study.pptx'
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        a.click()
+        URL.revokeObjectURL(url)
+      }
 
       setShowSuccess(true)
-      setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '' })
+      setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '', title: '' })
       setImages([])
     } catch (err) {
       setSubmitError(err.message || 'Something went wrong. Please try again.')
@@ -139,6 +188,50 @@ export default function CaseStudyForm() {
               placeholder="Your name"
               error={errors.contact}
             />
+          </div>
+
+          {/* Title row — full width */}
+          <div className="mt-4">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-[10px] font-semibold uppercase tracking-wider text-cool-gray">
+                Case Study Title
+              </label>
+              <button
+                type="button"
+                onClick={generateTitle}
+                disabled={generatingTitle}
+                className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-md transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed"
+                style={{ background: '#fedb00', color: '#1c1c1e' }}
+              >
+                {generatingTitle ? (
+                  <>
+                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    Generate with AI
+                  </>
+                )}
+              </button>
+            </div>
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => update('title', e.target.value)}
+              placeholder="Fill in the content fields above, then click Generate with AI"
+              className="w-full h-10 px-3 text-[13px] rounded-lg border border-gray-200 bg-white transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent placeholder:text-cool-gray/40"
+            />
+            {titleError && <p className="text-[11px] text-brand-accent mt-1">{titleError}</p>}
+            {form.title && !titleError && (
+              <p className="text-[11px] text-cool-gray mt-1">You can edit the generated title directly.</p>
+            )}
           </div>
         </FormSection>
 

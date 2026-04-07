@@ -147,43 +147,23 @@ export default async function handler(req, res) {
       pptxBuffer = generatePptx(fields);
     } catch (err) {
       console.error('PPTX generation error:', err.message);
-      // Continue without PPTX — still send the email with text + images
     }
 
-    // 4. Build attachments
-    const attachments = [];
-
-    if (pptxBuffer) {
-      const safeName = fields.product.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
-      attachments.push({
-        filename: `Case_Study_${safeName}.pptx`,
-        content: pptxBuffer,
-      });
-    }
-
-    for (const img of images) {
-      attachments.push({
-        filename: img.originalFilename || img.newFilename || 'image.jpg',
-        content: fs.readFileSync(img.filepath),
-      });
-    }
-
-    // 5. Send email via Resend
-    const resend = new Resend(process.env.RESEND_API_KEY);
-    await resend.emails.send({
-      from: 'Case Study Generator <onboarding@resend.dev>',
-      to: 'jd.maxwell@chesterton.com',
-      subject: `Case Study Submission: ${fields.product} \u2014 ${fields.industry}`,
-      html: buildEmailHtml(fields),
-      attachments,
-    });
-
-    // 6. Clean up temp files
+    // 4. Clean up temp files
     for (const img of images) {
       try { fs.unlinkSync(img.filepath); } catch {}
     }
 
-    return res.status(200).json({ success: true, message: 'Case study submitted successfully' });
+    // 5. Return PPTX as a download
+    if (pptxBuffer) {
+      const safeName = fields.product.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
+      const filename = `Case_Study_${safeName}.pptx`;
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+      return res.status(200).send(pptxBuffer);
+    }
+
+    return res.status(200).json({ success: true, message: 'Submitted (no PPTX template found)' });
   } catch (err) {
     console.error('Submit error:', err);
     return res.status(500).json({ error: 'Failed to submit case study. Please try again.' });
