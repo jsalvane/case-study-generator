@@ -58,6 +58,7 @@ function generatePptx(fields) {
     challenge: fields.challenge || '',
     solution: fields.solution || '',
     result: fields.result || '',
+    title: fields.title || '',
   });
 
   return doc.getZip().generate({ type: 'nodebuffer' });
