@@ -51,7 +51,9 @@ function generatePptx(fields) {
   });
 
   doc.render({
+    ProductLine: fields.productLine || '',
     Product: fields.product || '',
+    Industry: fields.industry || '',
     Challenge: fields.challenge || '',
     Solution: fields.solution || '',
     Results: fields.result || '',
