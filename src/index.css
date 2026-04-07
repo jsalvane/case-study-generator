@@ -1,0 +1,93 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-accent: #c8102e;
+  --color-brand-accent-dark: #a50e25;
+  --color-brand-accent-light: #fdf0f2;
+  --color-action: #fedb00;
+  --color-action-dark: #e5c500;
+  --color-action-light: #fffce0;
+  --color-cool-gray: #6e6e73;
+  --color-brand-black: #1c1c1e;
+
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --shadow-sm:  0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+  --shadow-md:  0 4px 24px rgba(0,0,0,0.07), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg:  0 12px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.05);
+  --shadow-xl:  0 24px 64px rgba(0,0,0,0.14), 0 8px 24px rgba(0,0,0,0.08);
+}
+
+/* ─── Animations ─── */
+
+@keyframes step-enter {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.step-enter {
+  animation: step-enter 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  15%       { transform: translateX(-10px); }
+  30%       { transform: translateX(10px); }
+  45%       { transform: translateX(-6px); }
+  60%       { transform: translateX(6px); }
+  75%       { transform: translateX(-2px); }
+  90%       { transform: translateX(2px); }
+}
+.pin-shake { animation: pin-shake 0.45s ease-in-out; }
+
+@keyframes gate-fade-out {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.02); pointer-events: none; }
+}
+.gate-fade-out { animation: gate-fade-out 0.5s cubic-bezier(0.4, 0, 1, 1) forwards; }
+
+@keyframes app-fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.app-fade-in { animation: app-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@keyframes card-enter {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.card-enter {
+  animation: card-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes pin-dot-fill {
+  from { transform: scale(0.6); opacity: 0.5; }
+  to   { transform: scale(1.1); opacity: 1; }
+}
+.pin-dot-fill {
+  animation: pin-dot-fill 0.15s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ─── Base ─── */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f2f2f7;
+  color: #1c1c1e;
+  margin: 0;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
