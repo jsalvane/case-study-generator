@@ -51,14 +51,11 @@ function generatePptx(fields) {
   });
 
   doc.render({
-    product_line: fields.productLine || '',
-    industry: fields.industry || '',
-    product: fields.product || '',
-    contact: fields.contact || '',
-    challenge: fields.challenge || '',
-    solution: fields.solution || '',
-    result: fields.result || '',
-    title: fields.title || '',
+    Product: fields.product || '',
+    Challenge: fields.challenge || '',
+    Solution: fields.solution || '',
+    Results: fields.result || '',
+    Title: fields.title || fields.product || '',
   });
 
   return doc.getZip().generate({ type: 'nodebuffer' });
