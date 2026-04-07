@@ -133,7 +133,7 @@ export default function CaseStudyForm() {
               error={errors.product}
             />
             <TextField
-              label="Submitted By"
+              label="Email"
               value={form.contact}
               onChange={v => update('contact', v)}
               placeholder="Your name"
@@ -177,6 +177,7 @@ export default function CaseStudyForm() {
               onToggleExample={() => setExpandedExample(expandedExample === 'result' ? null : 'result')}
               error={errors.result}
               rows={5}
+              isResult
             />
           </div>
         </FormSection>
@@ -219,6 +220,102 @@ export default function CaseStudyForm() {
 
       {showSuccess && <SuccessModal onClose={() => setShowSuccess(false)} />}
     </>
+  )
+}
+
+
+/* ─── Robustness scoring ─── */
+
+function scoreContent(text, isResult = false) {
+  const trimmed = text.trim()
+  if (!trimmed) return null
+
+  // Count meaningful sentences (5+ words each)
+  const sentences = trimmed
+    .split(/(?<=[.!?])\s+|(?<=[.!?])$/)
+    .filter(s => s.trim().split(/\s+/).filter(w => w.length > 0).length >= 5)
+  const sentenceCount = sentences.length
+  const wordCount = trimmed.split(/\s+/).filter(w => w.length > 0).length
+
+  let points = 0
+  const hints = []
+
+  if (!isResult) {
+    // Sentence score: 0–50
+    const sentPts =
+      sentenceCount === 0 ? 0
+      : sentenceCount === 1 ? 10
+      : sentenceCount === 2 ? 28
+      : sentenceCount <= 5 ? 50
+      : 42
+    // Word score: 0–50
+    const wordPts =
+      wordCount < 15 ? 0
+      : wordCount < 30 ? 15
+      : wordCount < 60 ? 30
+      : wordCount < 100 ? 45
+      : 50
+    points = sentPts + wordPts
+  } else {
+    // Sentence score: 0–35
+    const sentPts =
+      sentenceCount === 0 ? 0
+      : sentenceCount === 1 ? 7
+      : sentenceCount === 2 ? 20
+      : sentenceCount <= 5 ? 35
+      : 29
+    // Word score: 0–30
+    const wordPts =
+      wordCount < 15 ? 0
+      : wordCount < 30 ? 9
+      : wordCount < 60 ? 18
+      : wordCount < 100 ? 27
+      : 30
+    // Dollar value or % improvement: +20
+    const hasDollar = /\$[\d,.]|\d+\s*%/i.test(trimmed)
+    // ROI / savings keywords: +15
+    const hasROI = /\bsav(ed|ings?)\b|\bROI\b|\bpayback\b|\breduction\b|\belimin(at|ed)?\b|\bcost\b|\bdowntime\b|\bannual\b|\bmonthly\b/i.test(trimmed)
+
+    points = sentPts + wordPts + (hasDollar ? 20 : 0) + (hasROI ? 15 : 0)
+    if (!hasDollar) hints.push('Add a $ savings amount or % improvement')
+    if (!hasROI) hints.push('Include an ROI metric (e.g. annual savings, downtime reduction)')
+  }
+
+  const score = Math.min(100, points)
+  const status = score >= 70 ? 'green' : score >= 35 ? 'yellow' : 'red'
+  const label = status === 'green' ? 'Strong' : status === 'yellow' ? 'Good' : 'Needs detail'
+  return { score, status, label, hints }
+}
+
+function RobustnessIndicator({ text, isResult = false }) {
+  const result = scoreContent(text, isResult)
+  if (!result) return null
+
+  const { status, label, hints } = result
+  const barColor = status === 'green' ? '#22c55e' : status === 'yellow' ? '#f59e0b' : '#ef4444'
+  const textColor = status === 'green' ? '#16a34a' : status === 'yellow' ? '#d97706' : '#dc2626'
+  const segments = status === 'green' ? 3 : status === 'yellow' ? 2 : 1
+
+  return (
+    <div className="mt-1.5 flex flex-col gap-1">
+      <div className="flex items-center gap-2">
+        <div className="flex gap-1">
+          {[1, 2, 3].map(i => (
+            <div
+              key={i}
+              className="h-1.5 w-7 rounded-full transition-colors duration-300"
+              style={{ background: i <= segments ? barColor : '#e5e7eb' }}
+            />
+          ))}
+        </div>
+        <span className="text-[11px] font-semibold" style={{ color: textColor }}>
+          {label}
+        </span>
+      </div>
+      {hints.length > 0 && (
+        <p className="text-[11px] text-cool-gray leading-snug">{hints[0]}</p>
+      )}
+    </div>
   )
 }
 
@@ -274,7 +371,7 @@ function TextField({ label, value, onChange, placeholder, error }) {
   )
 }
 
-function TextareaField({ label, value, onChange, placeholder, example, expanded, onToggleExample, error, rows }) {
+function TextareaField({ label, value, onChange, placeholder, example, expanded, onToggleExample, error, rows, isResult }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-1.5">
@@ -303,6 +400,7 @@ function TextareaField({ label, value, onChange, placeholder, example, expanded,
           error ? 'border-brand-accent' : 'border-gray-200'
         }`}
       />
+      <RobustnessIndicator text={value} isResult={isResult} />
       {error && <p className="text-[11px] text-brand-accent mt-1">{error}</p>}
     </div>
   )

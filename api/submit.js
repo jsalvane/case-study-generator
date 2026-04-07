@@ -103,7 +103,7 @@ function buildEmailHtml(fields) {
                 <span style="font-size:14px; color:#1c1c1e; font-weight:500;">${fields.product}</span>
               </td>
               <td style="padding:4px 0;">
-                <span style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.08em;">Submitted By</span><br/>
+                <span style="font-size:11px; color:#6e6e73; text-transform:uppercase; font-weight:600; letter-spacing:0.08em;">Email</span><br/>
                 <span style="font-size:14px; color:#1c1c1e; font-weight:500;">${fields.contact}</span>
               </td>
             </tr>
