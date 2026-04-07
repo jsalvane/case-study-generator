@@ -35,13 +35,13 @@ const EXAMPLES = {
 
 export default function CaseStudyForm() {
   const [form, setForm] = useState({
-    productLine: '',
-    industry: '',
-    product: '',
-    contact: '',
-    challenge: '',
-    solution: '',
-    result: '',
+    productLine: 'Mechanical Seals',
+    industry: 'Pulp & Paper',
+    product: 'Chesterton 442 Split Seal',
+    contact: 'test.user@chesterton.com',
+    challenge: EXAMPLES.challenge,
+    solution: EXAMPLES.solution,
+    result: EXAMPLES.result,
   })
   const [images, setImages] = useState([])
   const [errors, setErrors] = useState({})
