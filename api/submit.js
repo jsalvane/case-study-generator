@@ -155,16 +155,17 @@ export default async function handler(req, res) {
       try { fs.unlinkSync(img.filepath); } catch {}
     }
 
-    // 5. Return PPTX as a download
+    // 5. Return PPTX as base64 JSON (reliable across all Vercel runtimes)
     if (pptxBuffer) {
       const safeName = fields.product.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
-      const filename = `Case_Study_${safeName}.pptx`;
-      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      return res.status(200).send(pptxBuffer);
+      return res.status(200).json({
+        success: true,
+        filename: `Case_Study_${safeName}.pptx`,
+        data: pptxBuffer.toString('base64'),
+      });
     }
 
-    return res.status(200).json({ success: true, message: 'Submitted (no PPTX template found)' });
+    return res.status(200).json({ success: true });
   } catch (err) {
     console.error('Submit error:', err);
     return res.status(500).json({ error: 'Failed to submit case study. Please try again.' });
