@@ -100,6 +100,17 @@ export default function CaseStudyForm() {
         URL.revokeObjectURL(url)
       }
 
+      if (data.images && data.images.length > 0) {
+        for (const img of data.images) {
+          const bytes = Uint8Array.from(atob(img.data), c => c.charCodeAt(0))
+          const blob = new Blob([bytes], { type: img.mimeType })
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url; a.download = img.name; a.click()
+          URL.revokeObjectURL(url)
+        }
+      }
+
       setShowSuccess(true)
       setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '' })
       setImages([])

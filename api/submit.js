@@ -149,22 +149,37 @@ export default async function handler(req, res) {
       console.error('PPTX generation error:', err.message);
     }
 
-    // 4. Clean up temp files
+    // 4. Read image files as base64 before cleaning up
+    const imagePayloads = images.map(img => {
+      try {
+        const buf = fs.readFileSync(img.filepath);
+        return {
+          name: img.originalFilename || img.newFilename || 'image',
+          mimeType: img.mimetype || 'application/octet-stream',
+          data: buf.toString('base64'),
+        };
+      } catch {
+        return null;
+      }
+    }).filter(Boolean);
+
+    // 5. Clean up temp files
     for (const img of images) {
       try { fs.unlinkSync(img.filepath); } catch {}
     }
 
-    // 5. Return PPTX as base64 JSON (reliable across all Vercel runtimes)
+    // 6. Return PPTX + images as base64 JSON
     if (pptxBuffer) {
       const safeName = fields.product.replace(/[^a-zA-Z0-9]/g, '_').replace(/_+/g, '_');
       return res.status(200).json({
         success: true,
         filename: `Case_Study_${safeName}.pptx`,
         data: pptxBuffer.toString('base64'),
+        images: imagePayloads,
       });
     }
 
-    return res.status(200).json({ success: true });
+    return res.status(200).json({ success: true, images: imagePayloads });
   } catch (err) {
     console.error('Submit error:', err);
     return res.status(500).json({ error: 'Failed to submit case study. Please try again.' });
