@@ -42,7 +42,6 @@ export default function CaseStudyForm() {
     challenge: '',
     solution: '',
     result: '',
-    title: '',
   })
   const [images, setImages] = useState([])
   const [errors, setErrors] = useState({})
@@ -50,42 +49,10 @@ export default function CaseStudyForm() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [submitError, setSubmitError] = useState('')
   const [expandedExample, setExpandedExample] = useState(null)
-  const [generatingTitle, setGeneratingTitle] = useState(false)
-  const [titleError, setTitleError] = useState('')
 
   function update(field, value) {
     setForm(prev => ({ ...prev, [field]: value }))
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: null }))
-  }
-
-  async function generateTitle() {
-    if (form.challenge.trim().length < 50 || form.solution.trim().length < 50 || form.result.trim().length < 50) {
-      setTitleError('Fill in Challenge, Solution, and Result first (50+ characters each).')
-      return
-    }
-    setTitleError('')
-    setGeneratingTitle(true)
-    try {
-      const res = await fetch('/api/generate-title', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          productLine: form.productLine,
-          industry: form.industry,
-          product: form.product,
-          challenge: form.challenge,
-          solution: form.solution,
-          result: form.result,
-        }),
-      })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Generation failed')
-      update('title', data.title)
-    } catch (err) {
-      setTitleError(err.message || 'Could not generate title. Please try again.')
-    } finally {
-      setGeneratingTitle(false)
-    }
   }
 
   function validate() {
@@ -140,7 +107,7 @@ export default function CaseStudyForm() {
       }
 
       setShowSuccess(true)
-      setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '', title: '' })
+      setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '' })
       setImages([])
     } catch (err) {
       setSubmitError(err.message || 'Something went wrong. Please try again.')
@@ -232,65 +199,6 @@ export default function CaseStudyForm() {
             />
           </div>
 
-          {/* Title row */}
-          <div style={{ marginTop: '16px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '7px' }}>
-              <label style={LABEL_STYLE}>Case Study Title</label>
-              <button
-                type="button"
-                onClick={generateTitle}
-                disabled={generatingTitle}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  color: '#1c1c1e',
-                  background: generatingTitle ? '#e5c500' : '#fedb00',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '5px 10px',
-                  cursor: generatingTitle ? 'default' : 'pointer',
-                  opacity: generatingTitle ? 0.7 : 1,
-                  transition: 'all 0.15s',
-                }}
-              >
-                {generatingTitle ? (
-                  <>
-                    <svg style={{ width: 12, height: 12, animation: 'spin 1s linear infinite' }} fill="none" viewBox="0 0 24 24">
-                      <circle style={{ opacity: 0.25 }} cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path style={{ opacity: 0.75 }} fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                    </svg>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                    Generate with AI
-                  </>
-                )}
-              </button>
-            </div>
-            <input
-              type="text"
-              value={form.title}
-              onChange={e => update('title', e.target.value)}
-              placeholder="Fill in Challenge, Solution & Result above, then click Generate with AI"
-              className="focus:ring-2 focus:ring-brand-accent/20 focus:border-brand-accent focus:bg-white placeholder:text-[#9a9a9f]"
-              style={{
-                ...fieldBase(false, !!form.title),
-                height: '48px',
-                padding: '0 14px',
-              }}
-            />
-            {titleError && <p style={{ fontSize: '12px', color: '#c8102e', marginTop: '5px' }}>{titleError}</p>}
-            {form.title && !titleError && (
-              <p style={{ fontSize: '12px', color: '#6e6e73', marginTop: '5px' }}>You can edit the generated title directly.</p>
-            )}
-          </div>
         </FormSection>
 
         {/* Section 2: Content */}
