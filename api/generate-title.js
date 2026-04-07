@@ -11,9 +11,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Challenge, solution, and result are required to generate a title.' });
   }
 
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+  try {
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
-  const prompt = `You are writing a headline for a B2B industrial case study for A.W. Chesterton Company.
+    const prompt = `You are writing a headline for a B2B industrial case study for A.W. Chesterton Company.
 
 Given the following case study details, generate ONE concise, compelling case study title. The title should:
 - Highlight the key outcome or benefit (include specific metrics if available)
@@ -33,12 +34,16 @@ Result: ${result}
 
 Return ONLY the title text — no quotes, no explanation, no punctuation at the end.`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 128,
-    messages: [{ role: 'user', content: prompt }],
-  });
+    const response = await client.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 128,
+      messages: [{ role: 'user', content: prompt }],
+    });
 
-  const title = response.content[0]?.text?.trim() ?? '';
-  return res.status(200).json({ title });
+    const title = response.content[0]?.text?.trim() ?? '';
+    return res.status(200).json({ title });
+  } catch (err) {
+    console.error('generate-title error:', err);
+    return res.status(500).json({ error: 'Failed to generate title. Please try again.' });
+  }
 }

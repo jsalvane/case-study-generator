@@ -120,9 +120,24 @@ export default function CaseStudyForm() {
       images.forEach(img => formData.append('images', img.compressed, img.name))
 
       const res = await fetch('/api/submit', { method: 'POST', body: formData })
-      const data = await res.json()
 
-      if (!res.ok) throw new Error(data.error || 'Submission failed')
+      if (!res.ok) {
+        let errMsg = 'Submission failed'
+        try { const d = await res.json(); errMsg = d.error || errMsg } catch {}
+        throw new Error(errMsg)
+      }
+
+      const contentType = res.headers.get('Content-Type') || ''
+      if (contentType.includes('presentation') || contentType.includes('octet-stream')) {
+        const blob = await res.blob()
+        const disposition = res.headers.get('Content-Disposition') || ''
+        const match = disposition.match(/filename="([^"]+)"/)
+        const filename = match ? match[1] : 'Case_Study.pptx'
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url; a.download = filename; a.click()
+        URL.revokeObjectURL(url)
+      }
 
       setShowSuccess(true)
       setForm({ productLine: '', industry: '', product: '', contact: '', challenge: '', solution: '', result: '', title: '' })
