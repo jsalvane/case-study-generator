@@ -5,6 +5,9 @@
     "api/submit.js": {
       "includeFiles": "templates/**",
       "maxDuration": 10
+    },
+    "api/generate-title.js": {
+      "maxDuration": 30
     }
   }
 }

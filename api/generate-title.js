@@ -44,6 +44,7 @@ Return ONLY the title text — no quotes, no explanation, no punctuation at the 
     return res.status(200).json({ title });
   } catch (err) {
     console.error('generate-title error:', err);
-    return res.status(500).json({ error: 'Failed to generate title. Please try again.' });
+    const message = err?.message || 'Unknown error';
+    return res.status(500).json({ error: `Title generation failed: ${message}` });
   }
 }
