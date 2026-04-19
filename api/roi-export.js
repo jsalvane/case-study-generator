@@ -1,3 +1,5 @@
+import pptxgen from 'pptxgenjs'
+
 const BRAND = {
   red: 'C8102E',
   darkRed: 'A50E25',
@@ -36,34 +38,11 @@ function costItemRows(items) {
   })
 }
 
-async function loadPptxgen() {
-  const attempts = [
-    'pptxgenjs/dist/pptxgen.es.js',
-    'pptxgenjs/dist/pptxgen.cjs.js',
-    'pptxgenjs',
-  ]
-  const errors = []
-  for (const spec of attempts) {
-    try {
-      const mod = await import(spec)
-      const Ctor = mod.default || mod
-      if (typeof Ctor === 'function') return Ctor
-      errors.push(`${spec}: default export is ${typeof Ctor}`)
-    } catch (err) {
-      errors.push(`${spec}: ${err?.message || err}`)
-    }
-  }
-  throw new Error(`pptxgenjs failed to load. Tried: ${errors.join(' | ')}`)
-}
-
 export default async function handler(req, res) {
   if (req.method === 'GET') {
-    let loaded = false, loadErr = null
-    try { await loadPptxgen(); loaded = true } catch (e) { loadErr = e.message }
     return res.status(200).json({
       ok: true,
-      pptxgenLoaded: loaded,
-      pptxgenLoadError: loadErr,
+      pptxgenLoaded: typeof pptxgen === 'function',
       node: process.version,
       env: process.env.VERCEL_ENV || 'unknown',
     })
@@ -71,7 +50,6 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const pptxgen = await loadPptxgen()
     const body = req.body && typeof req.body === 'object' ? req.body : (req.body ? JSON.parse(req.body) : {})
     const { meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartPng, anonymized } = body
     if (!meta) return res.status(400).json({ error: 'Missing payload' })
