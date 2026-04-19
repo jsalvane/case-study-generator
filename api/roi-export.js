@@ -1,5 +1,3 @@
-import pptxgen from 'pptxgenjs'
-
 const BRAND = {
   red: 'C8102E',
   darkRed: 'A50E25',
@@ -38,11 +36,29 @@ function costItemRows(items) {
   })
 }
 
+async function loadPptxgen() {
+  try {
+    const mod = await import('pptxgenjs')
+    const Ctor = mod.default || mod
+    if (typeof Ctor !== 'function') {
+      throw new Error(`pptxgenjs default export is ${typeof Ctor}`)
+    }
+    return Ctor
+  } catch (err) {
+    const e = new Error(`pptxgenjs failed to load: ${err?.message || err}`)
+    e.cause = err
+    throw e
+  }
+}
+
 export default async function handler(req, res) {
   if (req.method === 'GET') {
+    let loaded = false, loadErr = null
+    try { await loadPptxgen(); loaded = true } catch (e) { loadErr = e.message }
     return res.status(200).json({
       ok: true,
-      pptxgenLoaded: typeof pptxgen === 'function',
+      pptxgenLoaded: loaded,
+      pptxgenLoadError: loadErr,
       node: process.version,
       env: process.env.VERCEL_ENV || 'unknown',
     })
@@ -50,6 +66,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
+    const pptxgen = await loadPptxgen()
     const body = req.body && typeof req.body === 'object' ? req.body : (req.body ? JSON.parse(req.body) : {})
     const { meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartPng, anonymized } = body
     if (!meta) return res.status(400).json({ error: 'Missing payload' })
