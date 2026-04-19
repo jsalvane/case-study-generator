@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 
-export default function Header({ onLogout }) {
+export default function Header({ onLogout, toolTitle, onBack }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef(null)
 
@@ -47,9 +47,21 @@ export default function Header({ onLogout }) {
             className="font-semibold"
             style={{ fontSize: '13px', color: '#1c1c1e', letterSpacing: '-0.01em' }}
           >
-            Case Study Generator
+            {toolTitle || 'Sales Tools'}
           </span>
         </div>
+        {onBack && (
+          <button
+            onClick={onBack}
+            style={{
+              marginLeft: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px',
+              fontSize: '12px', fontWeight: 600, color: '#6e6e73',
+              background: '#f5f5f7', border: 'none', borderRadius: '8px',
+              padding: '6px 10px', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            ← Tools</button>
+        )}
       </div>
 
       {/* Right: settings */}
