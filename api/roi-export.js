@@ -37,18 +37,23 @@ function costItemRows(items) {
 }
 
 async function loadPptxgen() {
-  try {
-    const mod = await import('pptxgenjs')
-    const Ctor = mod.default || mod
-    if (typeof Ctor !== 'function') {
-      throw new Error(`pptxgenjs default export is ${typeof Ctor}`)
+  const attempts = [
+    'pptxgenjs/dist/pptxgen.es.js',
+    'pptxgenjs/dist/pptxgen.cjs.js',
+    'pptxgenjs',
+  ]
+  const errors = []
+  for (const spec of attempts) {
+    try {
+      const mod = await import(spec)
+      const Ctor = mod.default || mod
+      if (typeof Ctor === 'function') return Ctor
+      errors.push(`${spec}: default export is ${typeof Ctor}`)
+    } catch (err) {
+      errors.push(`${spec}: ${err?.message || err}`)
     }
-    return Ctor
-  } catch (err) {
-    const e = new Error(`pptxgenjs failed to load: ${err?.message || err}`)
-    e.cause = err
-    throw e
   }
+  throw new Error(`pptxgenjs failed to load. Tried: ${errors.join(' | ')}`)
 }
 
 export default async function handler(req, res) {
