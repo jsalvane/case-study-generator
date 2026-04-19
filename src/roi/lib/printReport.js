@@ -28,6 +28,115 @@ function itemDetail(i) {
   }
 }
 
+function buildChartSvg({ chartData, labels, mode, horizonYears }) {
+  if (!chartData || chartData.length === 0) return '<div class="missing">Chart unavailable</div>'
+  const W = 900, H = 360
+  const P = { top: 20, right: 20, bottom: 44, left: 72 }
+  const innerW = W - P.left - P.right
+  const innerH = H - P.top - P.bottom
+
+  const hasTracked = mode === 'tracked'
+  const maxY = Math.max(
+    ...chartData.map(d => Math.max(
+      d.current || 0,
+      d.chesterton || 0,
+      d.currentActual || 0,
+      d.chestertonActual || 0,
+    )),
+    1,
+  )
+  const niceMax = niceCeil(maxY)
+  const maxX = chartData[chartData.length - 1].year || horizonYears || 5
+
+  const x = v => P.left + (v / maxX) * innerW
+  const y = v => P.top + innerH - (v / niceMax) * innerH
+
+  const pathFor = (key) => {
+    const pts = chartData
+      .map(d => d[key])
+      .map((v, i) => (v == null ? null : `${i === 0 ? 'M' : 'L'} ${x(chartData[i].year).toFixed(1)} ${y(v).toFixed(1)}`))
+    let out = '', started = false
+    for (let i = 0; i < pts.length; i++) {
+      const v = chartData[i][key]
+      if (v == null) { started = false; continue }
+      const cmd = started ? 'L' : 'M'
+      out += `${cmd} ${x(chartData[i].year).toFixed(1)} ${y(v).toFixed(1)} `
+      started = true
+    }
+    return out.trim()
+  }
+
+  const yTicks = 5
+  const gridLines = []
+  const yLabels = []
+  for (let i = 0; i <= yTicks; i++) {
+    const v = (niceMax / yTicks) * i
+    const yy = y(v).toFixed(1)
+    gridLines.push(`<line x1="${P.left}" x2="${P.left + innerW}" y1="${yy}" y2="${yy}" stroke="#ebebed" stroke-width="1" />`)
+    yLabels.push(`<text x="${P.left - 8}" y="${yy}" text-anchor="end" dominant-baseline="middle" font-size="11" fill="#6e6e73">${fmtShortMoney(v)}</text>`)
+  }
+
+  const xTickCount = Math.min(Math.ceil(maxX), 10)
+  const xLabels = []
+  for (let i = 0; i <= xTickCount; i++) {
+    const v = (maxX / xTickCount) * i
+    const xx = x(v).toFixed(1)
+    xLabels.push(`<text x="${xx}" y="${P.top + innerH + 18}" text-anchor="middle" font-size="11" fill="#6e6e73">${v.toFixed(v === Math.round(v) ? 0 : 1)}</text>`)
+  }
+
+  const dashAttr = hasTracked ? ' stroke-dasharray="5 4"' : ''
+  const lines = []
+  lines.push(`<path d="${pathFor('current')}" fill="none" stroke="#6e6e73" stroke-width="2"${dashAttr} />`)
+  lines.push(`<path d="${pathFor('chesterton')}" fill="none" stroke="#c8102e" stroke-width="2.5"${dashAttr} />`)
+  if (hasTracked) {
+    lines.push(`<path d="${pathFor('currentActual')}" fill="none" stroke="#6e6e73" stroke-width="2.5" />`)
+    lines.push(`<path d="${pathFor('chestertonActual')}" fill="none" stroke="#c8102e" stroke-width="3" />`)
+  }
+
+  const legendItems = [
+    { color: '#6e6e73', label: labels?.A || 'Current', dashed: hasTracked },
+    { color: '#c8102e', label: labels?.B || 'Chesterton', dashed: hasTracked },
+  ]
+  if (hasTracked) {
+    legendItems.push({ color: '#6e6e73', label: `${labels?.A || 'Current'} (actual)`, dashed: false })
+    legendItems.push({ color: '#c8102e', label: `${labels?.B || 'Chesterton'} (actual)`, dashed: false })
+  }
+  let legendX = P.left
+  const legend = legendItems.map(item => {
+    const g = `<g transform="translate(${legendX}, 6)">
+      <line x1="0" x2="22" y1="6" y2="6" stroke="${item.color}" stroke-width="2.5"${item.dashed ? ' stroke-dasharray="5 4"' : ''} />
+      <text x="28" y="6" dominant-baseline="middle" font-size="11" fill="#1c1c1e">${esc(item.label)}</text>
+    </g>`
+    legendX += 40 + item.label.length * 6.2
+    return g
+  }).join('')
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Cumulative cost comparison">
+    <rect x="0" y="0" width="${W}" height="${H}" fill="#ffffff" />
+    ${legend}
+    ${gridLines.join('')}
+    ${yLabels.join('')}
+    ${xLabels.join('')}
+    <line x1="${P.left}" x2="${P.left + innerW}" y1="${P.top + innerH}" y2="${P.top + innerH}" stroke="#d1d1d6" stroke-width="1" />
+    <text x="${P.left + innerW / 2}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#6e6e73">Years</text>
+    ${lines.join('')}
+  </svg>`
+}
+
+function niceCeil(v) {
+  if (v <= 0) return 1
+  const exp = Math.pow(10, Math.floor(Math.log10(v)))
+  const f = v / exp
+  const nice = f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10
+  return nice * exp
+}
+
+function fmtShortMoney(v) {
+  if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(v >= 10_000_000 ? 0 : 1)}M`
+  if (v >= 1_000) return `$${(v / 1_000).toFixed(v >= 10_000 ? 0 : 1)}k`
+  return `$${Math.round(v)}`
+}
+
 function itemTable(items) {
   if (!items?.length) return '<p class="muted">No items.</p>'
   const rows = items.map(i => `
@@ -108,11 +217,7 @@ ${meta.application ? `<p class="subtitle">Application: ${esc(meta.application)}<
 
 <h2>Cumulative cost comparison</h2>
 <div class="chart">
-  ${chartSvg
-    ? chartSvg
-    : chartPng && chartPng.startsWith('data:image')
-      ? `<img src="${chartPng}" alt="Cumulative cost chart" />`
-      : '<div class="missing">Chart unavailable</div>'}
+  ${buildChartSvg({ chartData: results?.chartData, labels, mode, horizonYears })}
 </div>
 
 <div class="page-break"></div>
