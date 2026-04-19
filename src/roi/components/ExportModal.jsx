@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CheckboxField, Button } from '../ui/fields.jsx'
 
-export default function ExportModal({ open, onClose, onExportPptx, onSaveJson }) {
+export default function ExportModal({ open, onClose, onExportPdf, onSaveJson }) {
   const [anonymize, setAnonymize] = useState(false)
   const [busy, setBusy] = useState(null)
   const [error, setError] = useState('')
@@ -37,7 +37,7 @@ export default function ExportModal({ open, onClose, onExportPptx, onSaveJson })
         <div>
           <h3 style={{ margin: 0, fontSize: '18px', fontWeight: 700, color: '#1c1c1e' }}>Save or export</h3>
           <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#6e6e73' }}>
-            Save a .roi.json to edit later, or export a presentation-ready PPTX.
+            Save a .roi.json to edit later, or print a branded PDF report.
           </p>
         </div>
         <CheckboxField
@@ -48,8 +48,8 @@ export default function ExportModal({ open, onClose, onExportPptx, onSaveJson })
         />
         {error && <div style={{ background: '#fdf0f2', color: '#c8102e', padding: '10px 12px', borderRadius: '10px', fontSize: '12px' }}>{error}</div>}
         <div style={{ display: 'grid', gap: '8px' }}>
-          <Button onClick={() => run(onExportPptx, 'pptx')} disabled={busy != null}>
-            {busy === 'pptx' ? 'Exporting…' : 'Export PPTX'}
+          <Button onClick={() => run(onExportPdf, 'pdf')} disabled={busy != null}>
+            {busy === 'pdf' ? 'Opening…' : 'Export PDF report'}
           </Button>
           <Button variant="secondary" onClick={() => run(onSaveJson, 'json')} disabled={busy != null}>
             {busy === 'json' ? 'Saving…' : 'Save .roi.json'}

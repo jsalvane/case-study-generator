@@ -10,7 +10,8 @@ import MobileResultsSticky from './components/MobileResultsSticky.jsx'
 import { Button, TextareaField } from './ui/fields.jsx'
 import { computeRoi } from './lib/calc.js'
 import { serializeState, downloadJson, readJsonFile } from './lib/serialize.js'
-import { chartNodeToPng, exportPptx } from './lib/pptx.js'
+import { chartNodeToPng } from './lib/pptx.js'
+import { openPrintReport } from './lib/printReport.js'
 
 export default function RoiApp() {
   const {
@@ -41,17 +42,17 @@ export default function RoiApp() {
     downloadJson(payload, `ROI_${safe}_${state.meta.date || ''}.roi.json`)
   }
 
-  async function handleExportPptx(anonymize) {
+  async function handleExportPdf(anonymize) {
     const chartPng = await chartNodeToPng(chartRef.current)
     const exportState = anonymize
       ? { ...state, meta: { ...state.meta, customerName: 'Customer A', location: '' } }
       : state
-    await exportPptx({
+    openPrintReport({
       meta: exportState.meta,
       notes: state.notes,
       horizonYears: state.horizonYears,
       mode: state.mode,
-      labels: { A: exportState.meta.currentLabel, B: exportState.meta.chestertonLabel },
+      labels: { A: exportState.meta.currentLabel || 'Current', B: exportState.meta.chestertonLabel || 'Chesterton' },
       results: {
         paybackMonths: results.paybackMonths,
         tcoA: results.tcoA,
@@ -168,7 +169,7 @@ export default function RoiApp() {
       <ExportModal
         open={exportOpen}
         onClose={() => setExportOpen(false)}
-        onExportPptx={handleExportPptx}
+        onExportPdf={handleExportPdf}
         onSaveJson={handleSaveJson}
       />
     </>
