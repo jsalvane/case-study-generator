@@ -10,7 +10,7 @@ import MobileResultsSticky from './components/MobileResultsSticky.jsx'
 import { Button, TextareaField } from './ui/fields.jsx'
 import { computeRoi } from './lib/calc.js'
 import { serializeState, downloadJson, readJsonFile } from './lib/serialize.js'
-import { chartNodeToPng } from './lib/pptx.js'
+import { chartNodeToSvg } from './lib/pptx.js'
 import { openPrintReport } from './lib/printReport.js'
 
 export default function RoiApp() {
@@ -43,7 +43,7 @@ export default function RoiApp() {
   }
 
   async function handleExportPdf(anonymize) {
-    const chartPng = await chartNodeToPng(chartRef.current)
+    const chartSvg = chartNodeToSvg(chartRef.current)
     const exportState = anonymize
       ? { ...state, meta: { ...state.meta, customerName: 'Customer A', location: '' } }
       : state
@@ -64,7 +64,7 @@ export default function RoiApp() {
       },
       scenarioA: exportState.scenarioA,
       scenarioB: exportState.scenarioB,
-      chartPng,
+      chartSvg,
       anonymized: !!anonymize,
     })
   }

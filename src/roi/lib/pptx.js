@@ -1,3 +1,20 @@
+export function chartNodeToSvg(chartContainer) {
+  if (!chartContainer) return null
+  const svg = chartContainer.querySelector('svg')
+  if (!svg) return null
+  const width = svg.clientWidth || svg.getBoundingClientRect().width || 900
+  const height = svg.clientHeight || svg.getBoundingClientRect().height || 360
+  const clone = svg.cloneNode(true)
+  clone.setAttribute('xmlns', 'http://www.w3.org/2000/svg')
+  clone.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink')
+  clone.setAttribute('width', width)
+  clone.setAttribute('height', height)
+  if (!clone.getAttribute('viewBox')) {
+    clone.setAttribute('viewBox', `0 0 ${width} ${height}`)
+  }
+  return new XMLSerializer().serializeToString(clone)
+}
+
 export async function chartNodeToPng(chartContainer) {
   if (!chartContainer) return null
   const svg = chartContainer.querySelector('svg')

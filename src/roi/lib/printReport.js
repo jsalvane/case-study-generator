@@ -38,7 +38,7 @@ function itemTable(items) {
   return `<table class="items"><thead><tr><th>Item</th><th>Detail</th></tr></thead><tbody>${rows}</tbody></table>`
 }
 
-export function buildReportHtml({ meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartPng, anonymized }) {
+export function buildReportHtml({ meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartSvg, chartPng, anonymized }) {
   const kpis = [
     ['Payback period', fmtMonths(results?.paybackMonths)],
     ['Total savings', fmtCurrency(results?.savings)],
@@ -71,7 +71,7 @@ export function buildReportHtml({ meta, notes, horizonYears, mode, labels, resul
   .kpi .label { font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: #6e6e73; }
   .kpi .value { margin-top: 6px; font-size: 18px; font-weight: 700; }
   .chart { margin-top: 8px; page-break-inside: avoid; }
-  .chart img { width: 100%; height: auto; border: 1px solid #ebebed; border-radius: 8px; }
+  .chart img, .chart svg { width: 100%; height: auto; border: 1px solid #ebebed; border-radius: 8px; display: block; }
   .chart .missing { padding: 40px; text-align: center; color: #6e6e73; border: 1px dashed #ebebed; border-radius: 8px; }
   .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
   .scenario-title { font-size: 13px; font-weight: 700; margin: 0 0 6px; }
@@ -108,9 +108,11 @@ ${meta.application ? `<p class="subtitle">Application: ${esc(meta.application)}<
 
 <h2>Cumulative cost comparison</h2>
 <div class="chart">
-  ${chartPng && chartPng.startsWith('data:image')
-    ? `<img src="${chartPng}" alt="Cumulative cost chart" />`
-    : '<div class="missing">Chart unavailable</div>'}
+  ${chartSvg
+    ? chartSvg
+    : chartPng && chartPng.startsWith('data:image')
+      ? `<img src="${chartPng}" alt="Cumulative cost chart" />`
+      : '<div class="missing">Chart unavailable</div>'}
 </div>
 
 <div class="page-break"></div>
