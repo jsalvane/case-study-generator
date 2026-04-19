@@ -9,7 +9,7 @@ const BRAND = {
   white: 'FFFFFF',
 }
 
-export const config = { api: { bodyParser: { sizeLimit: '8mb' } } }
+export const config = { api: { bodyParser: { sizeLimit: '16mb' } } }
 
 function fmtCurrency(n) {
   if (n == null || Number.isNaN(n)) return '—'
@@ -124,12 +124,11 @@ export default async function handler(req, res) {
       nt.addText(notes, { x: 0.5, y: 1.2, w: 12.3, h: 5.8, fontFace: 'Inter', fontSize: 13, color: BRAND.black, valign: 'top' })
     }
 
-    const buf = await pres.write({ outputType: 'nodebuffer' })
-    const data = Buffer.isBuffer(buf) ? buf.toString('base64') : Buffer.from(buf).toString('base64')
+    const data = await pres.write({ outputType: 'base64' })
     const safe = (meta.customerName || 'Customer').replace(/[^a-zA-Z0-9]/g, '_')
     return res.status(200).json({ success: true, filename: `ROI_${safe}.pptx`, data })
   } catch (err) {
-    console.error('ROI export error:', err)
-    return res.status(500).json({ error: err.message || 'Failed to generate PPTX' })
+    console.error('ROI export error:', err, err?.stack)
+    return res.status(500).json({ error: err?.message || 'Failed to generate PPTX', stack: err?.stack })
   }
 }

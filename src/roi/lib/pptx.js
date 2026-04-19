@@ -18,7 +18,7 @@ export async function chartNodeToPng(chartContainer) {
       i.onerror = reject
       i.src = url
     })
-    const scale = 2
+    const scale = 1.5
     const canvas = document.createElement('canvas')
     canvas.width = width * scale
     canvas.height = height * scale
@@ -38,7 +38,11 @@ export async function exportPptx(payload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
-  if (!res.ok) throw new Error(`Export failed: ${res.status}`)
+  if (!res.ok) {
+    let detail = ''
+    try { const body = await res.json(); detail = body.error || JSON.stringify(body) } catch {}
+    throw new Error(`Export failed: ${res.status}${detail ? ' — ' + detail : ''}`)
+  }
   const json = await res.json()
   if (!json.success || !json.data) throw new Error('Export response missing data')
   const bin = atob(json.data)
