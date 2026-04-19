@@ -8,6 +8,9 @@
     },
     "api/generate-title.js": {
       "maxDuration": 30
+    },
+    "api/roi-export.js": {
+      "maxDuration": 30
     }
   }
 }

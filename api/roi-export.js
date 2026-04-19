@@ -39,10 +39,19 @@ function costItemRows(items) {
 }
 
 export default async function handler(req, res) {
+  if (req.method === 'GET') {
+    return res.status(200).json({
+      ok: true,
+      pptxgenLoaded: typeof pptxgen === 'function',
+      node: process.version,
+      env: process.env.VERCEL_ENV || 'unknown',
+    })
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   try {
-    const { meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartPng, anonymized } = req.body || {}
+    const body = req.body && typeof req.body === 'object' ? req.body : (req.body ? JSON.parse(req.body) : {})
+    const { meta, notes, horizonYears, mode, labels, results, scenarioA, scenarioB, chartPng, anonymized } = body
     if (!meta) return res.status(400).json({ error: 'Missing payload' })
 
     const pres = new pptxgen()
@@ -98,10 +107,15 @@ export default async function handler(req, res) {
     const chartSlide = pres.addSlide()
     chartSlide.background = { color: BRAND.white }
     chartSlide.addText('Cumulative cost comparison', { x: 0.5, y: 0.4, w: 12, h: 0.6, fontFace: 'Inter', fontSize: 22, color: BRAND.black, bold: true })
-    if (chartPng && chartPng.startsWith('data:image')) {
-      chartSlide.addImage({ data: chartPng, x: 0.5, y: 1.2, w: 12.3, h: 5.6 })
-    } else {
-      chartSlide.addText('(chart unavailable)', { x: 0.5, y: 3.5, w: 12, h: 0.5, fontFace: 'Inter', fontSize: 14, color: BRAND.gray, align: 'center' })
+    try {
+      if (chartPng && typeof chartPng === 'string' && chartPng.startsWith('data:image')) {
+        chartSlide.addImage({ data: chartPng, x: 0.5, y: 1.2, w: 12.3, h: 5.6 })
+      } else {
+        chartSlide.addText('(chart unavailable)', { x: 0.5, y: 3.5, w: 12, h: 0.5, fontFace: 'Inter', fontSize: 14, color: BRAND.gray, align: 'center' })
+      }
+    } catch (imgErr) {
+      console.error('chart image embed failed:', imgErr)
+      chartSlide.addText('(chart could not be embedded)', { x: 0.5, y: 3.5, w: 12, h: 0.5, fontFace: 'Inter', fontSize: 14, color: BRAND.gray, align: 'center' })
     }
 
     // ── Breakdown
