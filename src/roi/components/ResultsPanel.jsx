@@ -91,17 +91,6 @@ const ResultsPanel = forwardRef(function ResultsPanel({ results, labels, mode, c
               legendType="none"
             />
 
-            {/* Confidence band on Chesterton */}
-            <Area
-              type="monotone"
-              dataKey="chestertonBand"
-              name="Best / worst case"
-              fill="rgba(200,16,46,0.10)"
-              stroke="none"
-              activeDot={false}
-              isAnimationActive={false}
-            />
-
             <Line type="monotone" dataKey="current" name={labels.A} stroke="#6e6e73" strokeWidth={2} dot={false} strokeDasharray={mode === 'tracked' ? '4 4' : undefined} isAnimationActive={false} />
             <Line type="monotone" dataKey="chesterton" name={labels.B} stroke="#c8102e" strokeWidth={2.5} dot={false} strokeDasharray={mode === 'tracked' ? '4 4' : undefined} isAnimationActive={false} />
             {mode === 'tracked' && (

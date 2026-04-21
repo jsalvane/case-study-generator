@@ -55,7 +55,7 @@ function niceCeil(v) {
 }
 
 // -----------------------------------------------------------------------------
-// Chart SVG — savings shade, payback marker, confidence band baked in
+// Chart SVG — savings shade and payback marker
 // -----------------------------------------------------------------------------
 
 function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, currency }) {
@@ -70,7 +70,6 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
     ...chartData.map(d => Math.max(
       d.current || 0,
       d.chesterton || 0,
-      d.chestertonBandHigh || 0,
       d.currentActual || 0,
       d.chestertonActual || 0,
     )),
@@ -93,20 +92,6 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
     return out.trim()
   }
 
-  // Band polygon: top line forward, bottom line reversed.
-  const bandPolygon = (lowKey, highKey) => {
-    const top = [], bottom = []
-    for (let i = 0; i < chartData.length; i++) {
-      const lo = chartData[i][lowKey]
-      const hi = chartData[i][highKey]
-      if (lo == null || hi == null) continue
-      top.push(`${x(chartData[i].year).toFixed(1)},${y(hi).toFixed(1)}`)
-      bottom.push(`${x(chartData[i].year).toFixed(1)},${y(lo).toFixed(1)}`)
-    }
-    if (top.length === 0) return ''
-    return `${top.join(' ')} ${bottom.reverse().join(' ')}`
-  }
-
   // Savings zone polygon: current (upper) minus chesterton (lower), only where current > chesterton.
   const savingsPolygon = (() => {
     const top = [], bottom = []
@@ -122,8 +107,6 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
     if (top.length === 0) return ''
     return `${top.join(' ')} ${bottom.reverse().join(' ')}`
   })()
-
-  const confidenceBand = bandPolygon('chestertonBandLow', 'chestertonBandHigh')
 
   // Axes
   const yTicks = 5
@@ -166,7 +149,6 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
   // Legend
   const legendItems = [
     { color: '#15803d', label: 'Savings', box: true, opacity: 0.18 },
-    { color: '#c8102e', label: 'Best / worst case', box: true, opacity: 0.14 },
     { color: '#6e6e73', label: labels?.A || 'Current', dashed: hasTracked },
     { color: '#c8102e', label: labels?.B || 'Chesterton', dashed: hasTracked },
   ]
@@ -192,7 +174,6 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
     ${legend}
     ${gridLines.join('')}
     ${savingsPolygon ? `<polygon points="${savingsPolygon}" fill="#15803d" fill-opacity="0.14" stroke="none" />` : ''}
-    ${confidenceBand ? `<polygon points="${confidenceBand}" fill="#c8102e" fill-opacity="0.10" stroke="none" />` : ''}
     ${yLabels.join('')}
     ${xLabels.join('')}
     <line x1="${P.left}" x2="${P.left + innerW}" y1="${P.top + innerH}" y2="${P.top + innerH}" stroke="#d1d1d6" stroke-width="1" />
@@ -289,13 +270,7 @@ function buildExecutiveSummary({ meta, labels, horizonYears, results, currency }
   const s2 = drivers.length
     ? `Key operational benefits: ${drivers.map(d => `<strong>${esc(d)}</strong>`).join(', ')}.`
     : ''
-  const sensitivityNote = results.sensitivity === 'conservative'
-    ? `This estimate uses a <strong>Worst case</strong> sensitivity — the benefit from Chesterton may be lower than projected.`
-    : results.sensitivity === 'aggressive'
-    ? `This estimate uses a <strong>Best case</strong> sensitivity — the benefit from Chesterton may be higher than projected.`
-    : null
-
-  return `<p>${s1}</p>${s2 ? `<p>${s2}</p>` : ''}${sensitivityNote ? `<p>${sensitivityNote}</p>` : ''}`
+  return `<p>${s1}</p>${s2 ? `<p>${s2}</p>` : ''}`
 }
 
 // -----------------------------------------------------------------------------
@@ -318,11 +293,7 @@ export function buildReportHtml({ meta, notes, horizonYears, mode, labels, resul
   if (results?.co2eKgAvoided > 0)    kpis.push(['CO₂e avoided',       `${Math.round(results.co2eKgAvoided).toLocaleString()} kg`])
 
   const subtitle = [meta.industry, meta.productLine, meta.location].filter(Boolean).map(esc).join(' • ')
-  const sensitivityLabelMap = { conservative: 'Worst case', expected: 'Most likely', aggressive: 'Best case' }
-  const sensitivityForFooter = results?.sensitivity && results.sensitivity !== 'expected'
-    ? ` • Sensitivity: ${esc(sensitivityLabelMap[results.sensitivity] || results.sensitivity)}`
-    : ''
-  const footerLine = `Prepared by ${esc(meta.preparedBy || '—')} • ${esc(meta.date || '')} • Horizon: ${esc(horizonYears)} yr • ${mode === 'tracked' ? 'Tracked' : 'Projected'}${sensitivityForFooter}${anonymized ? ' • Anonymized' : ''}`
+  const footerLine = `Prepared by ${esc(meta.preparedBy || '—')} • ${esc(meta.date || '')} • Horizon: ${esc(horizonYears)} yr • ${mode === 'tracked' ? 'Tracked' : 'Projected'}${anonymized ? ' • Anonymized' : ''}`
 
   const execSummary = buildExecutiveSummary({ meta, labels, horizonYears, results, currency })
   const pairedTable = pairedCategories(scenarioA, scenarioB, currency)

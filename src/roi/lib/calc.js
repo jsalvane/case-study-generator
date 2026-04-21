@@ -8,32 +8,20 @@ import {
 } from './costItems.js'
 import { CURRENCIES } from './theme.js'
 
-// Sensitivity multipliers applied symmetrically to the A→B advantage (delta).
-// Conservative shrinks the delta toward zero; aggressive amplifies it.
-export const SENSITIVITY_MULTIPLIERS = {
-  conservative: 0.7,
-  expected: 1,
-  aggressive: 1.2,
-}
-
 export function computeRoi({
   horizonYears,
   scenarioA,
   scenarioB,
   mode = 'projected',
   elapsedMonths = 0,
-  sensitivity = 'expected',
 }) {
   const years = Math.max(1, Math.min(15, Number(horizonYears) || 5))
   const months = Math.max(1, Math.round(years * 12))
 
-  const multiplier = SENSITIVITY_MULTIPLIERS[sensitivity] ?? 1
-
   const seriesA = buildSeries(scenarioA.items, months, mode, elapsedMonths)
   const seriesB = buildSeries(scenarioB.items, months, mode, elapsedMonths)
 
-  // Apply sensitivity multiplier to the A→B delta. Positive or negative delta shrinks/amplifies consistently.
-  const projectedBAdj = seriesB.projected.map((v, i) => applyMultiplier(seriesA.projected[i], v, multiplier))
+  const projectedBAdj = seriesB.projected
 
   const cumA = cumulative(seriesA.projected)
   const cumB = cumulative(projectedBAdj)
@@ -72,12 +60,6 @@ export function computeRoi({
   const co2eKgB = scenarioB.items.reduce((s, i) => s + annualCo2eKg(i), 0) * years
   const co2eKgAvoided = Math.max(0, co2eKgA - co2eKgB)
 
-  // Confidence band: always computed from conservative / aggressive multipliers, regardless of selected sensitivity.
-  const projectedBLow = seriesB.projected.map((v, i) => applyMultiplier(seriesA.projected[i], v, SENSITIVITY_MULTIPLIERS.aggressive))     // most savings → B cheapest
-  const projectedBHigh = seriesB.projected.map((v, i) => applyMultiplier(seriesA.projected[i], v, SENSITIVITY_MULTIPLIERS.conservative)) // least savings → B most expensive
-  const cumBLow = cumulative(projectedBLow)
-  const cumBHigh = cumulative(projectedBHigh)
-
   // Cumulative chart rows (month-level).
   const chartData = []
   for (let i = 0; i <= months; i++) {
@@ -86,10 +68,7 @@ export function computeRoi({
       year: +(i / 12).toFixed(3),
       current: cumA[i],
       chesterton: cumB[i],
-      chestertonBandLow: cumBLow[i],
-      chestertonBandHigh: cumBHigh[i],
-      savingsBand: [cumB[i], cumA[i]], // [lower, upper] — empty if current < chesterton, still valid for Recharts Area range
-      chestertonBand: [cumBLow[i], cumBHigh[i]],
+      savingsBand: [cumB[i], cumA[i]], // [lower, upper] — green savings zone between the two lines
     }
     if (mode === 'tracked') {
       row.currentActual = i <= elapsedMonths ? cumAActual[i] : null
@@ -133,14 +112,7 @@ export function computeRoi({
     subtotalAnnualB: scenarioB.items.reduce((s, i) => s + (i.typeId === 'oneTime' ? 0 : annualCostInYear(i, 0)), 0),
     oneTimeA: scenarioA.items.filter(i => i.typeId === 'oneTime').reduce((s, i) => s + (Number(i.amount) || 0), 0),
     oneTimeB: scenarioB.items.filter(i => i.typeId === 'oneTime').reduce((s, i) => s + (Number(i.amount) || 0), 0),
-    sensitivity,
-    sensitivityMultiplier: multiplier,
   }
-}
-
-// Scale the (A - B) delta by `mul` and return the adjusted B: Bnew = A - (A - B) * mul.
-function applyMultiplier(a, b, mul) {
-  return a - (a - b) * mul
 }
 
 function buildSeries(items, months, mode, elapsedMonths) {

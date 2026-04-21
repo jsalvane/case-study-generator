@@ -2,7 +2,6 @@ import { COST_TYPES } from './costItems.js'
 import { CURRENCIES } from './theme.js'
 
 export const VALID_MODES = ['projected', 'tracked']
-export const VALID_SENSITIVITIES = ['conservative', 'expected', 'aggressive']
 export const HORIZON_MIN = 1
 export const HORIZON_MAX = 15
 
@@ -52,7 +51,6 @@ export function validateAndNormalizeState(state) {
   const currency = CURRENCIES[state.meta.currency] ? state.meta.currency : 'USD'
   const horizonYears = Math.max(HORIZON_MIN, Math.min(HORIZON_MAX, num(state.horizonYears, 5)))
   const mode = VALID_MODES.includes(state.mode) ? state.mode : 'projected'
-  const sensitivity = VALID_SENSITIVITIES.includes(state.sensitivity) ? state.sensitivity : 'expected'
 
   return {
     meta: {
@@ -70,7 +68,6 @@ export function validateAndNormalizeState(state) {
     horizonYears,
     mode,
     elapsedMonths: Math.max(0, num(state.elapsedMonths, 0)),
-    sensitivity,
     notes: str(state.notes, ''),
     scenarioA: { items: state.scenarioA.items.map(normalizeItem) },
     scenarioB: { items: state.scenarioB.items.map(normalizeItem) },

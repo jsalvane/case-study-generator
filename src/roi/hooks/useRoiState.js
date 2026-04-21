@@ -22,7 +22,6 @@ function sampleState() {
     horizonYears: 5,
     mode: 'projected',
     elapsedMonths: 0,
-    sensitivity: 'expected',
     scenarioA: {
       items: [
         createItem('oneTime',   { label: 'Acquisition cost',      amount: 3500, occursAt: 0, categoryId: 'Acquisition',    sourceNote: 'Competitor quote' }),
@@ -93,10 +92,6 @@ export default function useRoiState() {
     setState(s => ({ ...s, elapsedMonths: Math.max(0, Number(m) || 0) }))
   }, [setState])
 
-  const setSensitivity = useCallback((sensitivity) => {
-    setState(s => ({ ...s, sensitivity }))
-  }, [setState])
-
   const setNotes = useCallback((notes) => {
     setState(s => ({ ...s, notes }))
   }, [setState])
@@ -157,7 +152,6 @@ export default function useRoiState() {
     setHorizon,
     setMode,
     setElapsed,
-    setSensitivity,
     setNotes,
     upsertItem,
     removeItem,

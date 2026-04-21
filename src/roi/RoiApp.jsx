@@ -16,7 +16,7 @@ import { buildShareUrl, readShareFromHash, clearShareHash } from './lib/share.js
 export default function RoiApp() {
   const {
     state, canUndo, undo,
-    updateMeta, setHorizon, setMode, setElapsed, setSensitivity, setNotes,
+    updateMeta, setHorizon, setMode, setElapsed, setNotes,
     upsertItem, removeItem, cloneScenario, replaceState, resetState,
   } = useRoiState()
   const [exportOpen, setExportOpen] = useState(false)
@@ -46,7 +46,6 @@ export default function RoiApp() {
     scenarioB: state.scenarioB,
     mode: state.mode,
     elapsedMonths: state.elapsedMonths,
-    sensitivity: state.sensitivity,
   }), [state])
 
   const labels = {
@@ -151,8 +150,7 @@ export default function RoiApp() {
             onHorizon={setHorizon}
             elapsedMonths={state.elapsedMonths}
             onElapsed={setElapsed}
-            sensitivity={state.sensitivity}
-            onSensitivity={setSensitivity}
+
           />
         </FormSection>
 
