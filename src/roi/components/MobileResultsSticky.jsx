@@ -9,12 +9,12 @@ export default function MobileResultsSticky({ results, labels = {}, currency = '
   } = results
 
   const fullKpis = [
-    { label: 'Payback',       value: formatMonths(paybackMonths) },
-    { label: 'Savings',       value: formatCurrency(savings, currency), accent: savings > 0 },
-    { label: 'ROI',           value: roiPct == null ? '—' : `${Math.round(roiPct)}%`, accent: roiPct > 0 },
-    { label: 'Annualized',    value: formatCurrency(annualizedSavings, currency) },
-    { label: `${labels.A || 'Current'} TCO`,    value: formatCurrency(tcoA, currency) },
-    { label: `${labels.B || 'Chesterton'} TCO`, value: formatCurrency(tcoB, currency) },
+    { label: 'Pays for itself', value: formatMonths(paybackMonths) },
+    { label: 'Savings',         value: formatCurrency(savings, currency), accent: savings > 0 },
+    { label: 'ROI',             value: roiPct == null ? '—' : `${Math.round(roiPct)}%`, accent: roiPct > 0 },
+    { label: 'Per year',        value: formatCurrency(annualizedSavings, currency) },
+    { label: `${labels.A || 'Current'} total cost`,    value: formatCurrency(tcoA, currency) },
+    { label: `${labels.B || 'Chesterton'} total cost`, value: formatCurrency(tcoB, currency) },
     { label: 'Downtime hr avoided', value: `${Math.round(downtimeHoursAvoided || 0).toLocaleString()} hr` },
     ...(energyKwhAvoided > 0 ? [{ label: 'kWh avoided', value: `${Math.round(energyKwhAvoided).toLocaleString()}` }] : []),
     ...(co2eKgAvoided > 0 ? [{ label: 'CO₂e avoided', value: `${Math.round(co2eKgAvoided).toLocaleString()} kg` }] : []),
@@ -66,7 +66,7 @@ export default function MobileResultsSticky({ results, labels = {}, currency = '
         }}
       >
         <div style={{ display: 'flex', gap: '16px', overflow: 'hidden' }}>
-          <Kpi label="Payback" value={formatMonths(paybackMonths)} />
+          <Kpi label="Pays for itself" value={formatMonths(paybackMonths)} />
           <Kpi label="Savings" value={formatCurrency(savings, currency)} accent={savings > 0} />
           <Kpi label="ROI" value={roiPct == null ? '—' : `${Math.round(roiPct)}%`} accent={roiPct > 0} />
         </div>

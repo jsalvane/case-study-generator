@@ -2,9 +2,9 @@ import { NumberField } from '../ui/fields.jsx'
 import { HORIZON_MAX, HORIZON_MIN } from '../lib/validate.js'
 
 const SENSITIVITY_OPTIONS = [
-  { value: 'conservative', label: 'Conservative', hint: '−30% to Chesterton advantage' },
-  { value: 'expected',     label: 'Expected',     hint: 'Point estimate from inputs' },
-  { value: 'aggressive',   label: 'Aggressive',   hint: '+20% to Chesterton advantage' },
+  { value: 'conservative', label: 'Worst case',   hint: 'Pessimistic — reduces Chesterton\'s projected benefit' },
+  { value: 'expected',     label: 'Most likely',  hint: 'Point estimate from your inputs' },
+  { value: 'aggressive',   label: 'Best case',    hint: 'Optimistic — increases Chesterton\'s projected benefit' },
 ]
 
 export default function ModeToggle({
@@ -40,7 +40,7 @@ export default function ModeToggle({
       <div style={{ display: 'grid', gridTemplateColumns: mode === 'tracked' ? '1fr 1fr' : '1fr', gap: '12px', maxWidth: '360px' }}>
         <div>
           <NumberField
-            label={`Horizon (${HORIZON_MIN}–${HORIZON_MAX} yrs)`}
+            label="Years to compare"
             value={horizonYears}
             onChange={onHorizon}
             min={HORIZON_MIN}
@@ -54,7 +54,7 @@ export default function ModeToggle({
 
       {mode === 'tracked' && (
         <div style={{ fontSize: '12px', color: '#6e6e73', background: '#f5f5f7', borderRadius: '10px', padding: '10px 12px', lineHeight: 1.5 }}>
-          Tracked mode replaces the projection for the first <strong>{elapsedMonths || 0}</strong> month(s) with a blended monthly allocation of each item's dated actuals. This is a smoothed view — use the event log on each item for a precise audit trail.
+          We'll use the actual costs you've logged below for the first <strong>{elapsedMonths || 0}</strong> months, then switch back to the projected rate.
         </div>
       )}
 
@@ -82,7 +82,7 @@ export default function ModeToggle({
           ))}
         </div>
         <div style={{ fontSize: '12px', color: '#6e6e73', marginTop: '6px' }}>
-          Scales the A→B advantage for a what-if. The chart always shows the full confidence band.
+          Adjusts how optimistic the savings estimate is. The chart always shows the full range.
         </div>
       </div>
     </div>

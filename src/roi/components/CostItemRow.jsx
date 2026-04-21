@@ -78,12 +78,6 @@ export default function CostItemRow({ item, mode, currency = 'USD', onEdit, onIn
               background: '#f5f5f7', padding: '2px 6px', borderRadius: '5px',
             }}>{item.categoryId}</span>
           )}
-          {item.isInvestment && (
-            <span title="Counts toward ROI investment basis" style={{
-              fontSize: '10px', fontWeight: 700, letterSpacing: '0.06em', color: '#15803d',
-              background: 'rgba(21,128,61,0.12)', padding: '2px 6px', borderRadius: '5px',
-            }}>ROI BASIS</span>
-          )}
           {item.sourceNote && (
             <span title={item.sourceNote} style={{
               fontSize: '10px', color: '#6e6e73',

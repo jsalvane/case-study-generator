@@ -118,7 +118,7 @@ export default function RoiApp() {
               ROI Calculator
             </p>
             <h1 style={{ margin: '4px 0 0', fontSize: '24px', fontWeight: 700, color: '#1c1c1e', letterSpacing: '-0.02em' }}>
-              Total cost of ownership comparison
+              Cost comparison
             </h1>
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -143,7 +143,7 @@ export default function RoiApp() {
           <MetaBlock meta={state.meta} onChange={updateMeta} />
         </FormSection>
 
-        <FormSection step={2} title="Horizon, mode & sensitivity" description="Projected for hypothetical ROI, Tracked for actuals to date. Sensitivity scales Chesterton's advantage.">
+        <FormSection step={2} title="Comparison settings" description="Set the time horizon and scenario assumptions.">
           <ModeToggle
             mode={state.mode}
             onMode={setMode}
@@ -156,7 +156,7 @@ export default function RoiApp() {
           />
         </FormSection>
 
-        <FormSection step={3} title="Cost scenarios" description="Tag items with a shared category to pair them A ↔ B in the PDF.">
+        <FormSection step={3} title="Cost scenarios" description="Enter the costs for each solution. Chesterton items will be compared against the current solution.">
           <div className="roi-scenarios" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
             <ScenarioCard
               title={labels.A}
@@ -187,7 +187,7 @@ export default function RoiApp() {
           </div>
         </FormSection>
 
-        <FormSection step={4} title="Results" description="Cumulative cost comparison across the horizon.">
+        <FormSection step={4} title="Results" description="See where Chesterton pays off.">
           <ResultsPanel ref={chartRef} results={results} labels={labels} mode={state.mode} currency={currency} />
         </FormSection>
 

@@ -77,7 +77,7 @@ export default function ScenarioCard({
           <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(oneTime, currency)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '10px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Annual (yr 1)</div>
+          <div style={{ fontSize: '10px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Per year (yr 1)</div>
           <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(yearly, currency)}</div>
         </div>
       </div>

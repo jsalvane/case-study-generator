@@ -103,33 +103,38 @@ export default function CostItemDrawer({
             <Fields item={draft} onPatch={patch} />
 
             {/* Shared fields: category pairing + escalation + source note + investment flag */}
-            <div style={{ borderTop: '1px solid #ebebed', paddingTop: '16px', display: 'grid', gap: '14px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <NumberField
-                  label="Annual escalation"
-                  value={draft.escalationPct ?? 0}
-                  onChange={v => patch({ escalationPct: v })}
-                  suffix="%/yr"
-                  step="0.5"
-                />
-                <CategoryField
-                  value={draft.categoryId}
-                  suggestions={categorySuggestions}
-                  onChange={v => patch({ categoryId: v === '' ? null : v })}
-                />
-              </div>
-              <TextField
-                label="Source / justification (shown in PDF)"
-                value={draft.sourceNote ?? ''}
-                onChange={v => patch({ sourceNote: v })}
-                placeholder="2024 work-order log · customer-provided · industry benchmark"
-              />
-              <CheckboxField
-                label="Counts toward ROI investment basis"
-                description="ROI % = savings ÷ sum of items flagged here. Typically the Chesterton up-front investment."
-                checked={!!draft.isInvestment}
-                onChange={v => patch({ isInvestment: v })}
-              />
+            <div style={{ borderTop: '1px solid #ebebed', paddingTop: '16px' }}>
+              <details>
+                <summary style={{ cursor: 'pointer', fontSize: '13px', color: '#6e6e73', marginTop: '4px', userSelect: 'none' }}>Advanced</summary>
+                <div style={{ display: 'grid', gap: '14px', marginTop: '14px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+                    <NumberField
+                      label="Annual price increase"
+                      value={draft.escalationPct ?? 0}
+                      onChange={v => patch({ escalationPct: v })}
+                      suffix="%/yr"
+                      step="0.5"
+                    />
+                    <CategoryField
+                      value={draft.categoryId}
+                      suggestions={categorySuggestions}
+                      onChange={v => patch({ categoryId: v === '' ? null : v })}
+                    />
+                  </div>
+                  <TextField
+                    label="Where this number came from"
+                    value={draft.sourceNote ?? ''}
+                    onChange={v => patch({ sourceNote: v })}
+                    placeholder="2024 work-order log · customer-provided · industry benchmark"
+                  />
+                  <CheckboxField
+                    label="This is the upfront Chesterton investment"
+                    description="Marks this as the investment being justified. Used to calculate ROI %."
+                    checked={!!draft.isInvestment}
+                    onChange={v => patch({ isInvestment: v })}
+                  />
+                </div>
+              </details>
             </div>
 
             {mode === 'tracked' && (
@@ -143,7 +148,7 @@ export default function CostItemDrawer({
 
             <div style={{ background: '#f5f5f7', borderRadius: '12px', padding: '14px 16px' }}>
               <div style={{ fontSize: '11px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>
-                Annualized (year 1)
+                Per year (year 1)
               </div>
               <div style={{ fontSize: '22px', fontWeight: 700, color: '#1c1c1e', marginTop: '2px' }}>
                 {formatCurrency(draft.typeId === 'oneTime' ? (Number(draft.amount) || 0) : annualCost(draft), currency)}
@@ -175,7 +180,7 @@ function CategoryField({ value, suggestions, onChange }) {
   return (
     <div>
       <label style={{ display: 'block', fontSize: '13px', fontWeight: 500, color: '#6e6e73', marginBottom: '7px' }}>
-        Category (pairs A ↔ B)
+        Pairing tag
       </label>
       <input
         list={listId}

@@ -159,14 +159,14 @@ function buildChartSvg({ chartData, labels, mode, horizonYears, paybackMonths, c
     const px = x(paybackMonths / 12).toFixed(1)
     paybackLayer = `
       <line x1="${px}" x2="${px}" y1="${P.top}" y2="${P.top + innerH}" stroke="#15803d" stroke-width="1.5" stroke-dasharray="4 4" />
-      <text x="${px}" y="${P.top - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">Payback · ${esc(fmtMonths(paybackMonths))}</text>
+      <text x="${px}" y="${P.top - 6}" text-anchor="middle" font-size="11" font-weight="600" fill="#15803d">Pays for itself · ${esc(fmtMonths(paybackMonths))}</text>
     `
   }
 
   // Legend
   const legendItems = [
-    { color: '#15803d', label: 'Savings zone', box: true, opacity: 0.18 },
-    { color: '#c8102e', label: 'Confidence band', box: true, opacity: 0.14 },
+    { color: '#15803d', label: 'Savings', box: true, opacity: 0.18 },
+    { color: '#c8102e', label: 'Best / worst case', box: true, opacity: 0.14 },
     { color: '#6e6e73', label: labels?.A || 'Current', dashed: hasTracked },
     { color: '#c8102e', label: labels?.B || 'Chesterton', dashed: hasTracked },
   ]
@@ -289,9 +289,13 @@ function buildExecutiveSummary({ meta, labels, horizonYears, results, currency }
   const s2 = drivers.length
     ? `Key operational benefits: ${drivers.map(d => `<strong>${esc(d)}</strong>`).join(', ')}.`
     : ''
-  const s3 = `Sensitivity: <strong>${esc(results.sensitivity || 'expected')}</strong>. The confidence band on the chart shows the outcome range across conservative (−30% benefit) to aggressive (+20% benefit) assumptions.`
+  const sensitivityNote = results.sensitivity === 'conservative'
+    ? `This estimate uses a <strong>Worst case</strong> sensitivity — the benefit from Chesterton may be lower than projected.`
+    : results.sensitivity === 'aggressive'
+    ? `This estimate uses a <strong>Best case</strong> sensitivity — the benefit from Chesterton may be higher than projected.`
+    : null
 
-  return `<p>${s1}</p>${s2 ? `<p>${s2}</p>` : ''}<p>${s3}</p>`
+  return `<p>${s1}</p>${s2 ? `<p>${s2}</p>` : ''}${sensitivityNote ? `<p>${sensitivityNote}</p>` : ''}`
 }
 
 // -----------------------------------------------------------------------------
@@ -302,19 +306,23 @@ export function buildReportHtml({ meta, notes, horizonYears, mode, labels, resul
   const currency = meta.currency || 'USD'
 
   const kpis = [
-    ['Payback period',       fmtMonths(results?.paybackMonths)],
+    ['Pays for itself',      fmtMonths(results?.paybackMonths)],
     ['Total savings',        fmtCurrency(results?.savings, currency)],
     ['ROI',                  results?.roiPct == null ? '—' : `${Math.round(results.roiPct)}%`],
-    ['Annualized savings',   fmtCurrency(results?.annualizedSavings, currency)],
-    [`${labels?.A || 'Current'} TCO`,    fmtCurrency(results?.tcoA, currency)],
-    [`${labels?.B || 'Chesterton'} TCO`, fmtCurrency(results?.tcoB, currency)],
+    ['Savings per year',     fmtCurrency(results?.annualizedSavings, currency)],
+    [`${labels?.A || 'Current'} total cost`,    fmtCurrency(results?.tcoA, currency)],
+    [`${labels?.B || 'Chesterton'} total cost`, fmtCurrency(results?.tcoB, currency)],
     ['Downtime hours avoided', `${Math.round(results?.downtimeHoursAvoided || 0).toLocaleString()} hr`],
   ]
   if (results?.energyKwhAvoided > 0) kpis.push(['Energy kWh avoided', `${Math.round(results.energyKwhAvoided).toLocaleString()} kWh`])
   if (results?.co2eKgAvoided > 0)    kpis.push(['CO₂e avoided',       `${Math.round(results.co2eKgAvoided).toLocaleString()} kg`])
 
   const subtitle = [meta.industry, meta.productLine, meta.location].filter(Boolean).map(esc).join(' • ')
-  const footerLine = `Prepared by ${esc(meta.preparedBy || '—')} • ${esc(meta.date || '')} • Horizon: ${esc(horizonYears)} yr • ${mode === 'tracked' ? 'Tracked' : 'Projected'} • Sensitivity: ${esc(results?.sensitivity || 'expected')}${anonymized ? ' • Anonymized' : ''}`
+  const sensitivityLabelMap = { conservative: 'Worst case', expected: 'Most likely', aggressive: 'Best case' }
+  const sensitivityForFooter = results?.sensitivity && results.sensitivity !== 'expected'
+    ? ` • Sensitivity: ${esc(sensitivityLabelMap[results.sensitivity] || results.sensitivity)}`
+    : ''
+  const footerLine = `Prepared by ${esc(meta.preparedBy || '—')} • ${esc(meta.date || '')} • Horizon: ${esc(horizonYears)} yr • ${mode === 'tracked' ? 'Tracked' : 'Projected'}${sensitivityForFooter}${anonymized ? ' • Anonymized' : ''}`
 
   const execSummary = buildExecutiveSummary({ meta, labels, horizonYears, results, currency })
   const pairedTable = pairedCategories(scenarioA, scenarioB, currency)
@@ -392,7 +400,7 @@ ${meta.application ? `<p class="subtitle">Application: ${esc(meta.application)}<
   ${buildChartSvg({ chartData: results?.chartData, labels, mode, horizonYears, paybackMonths: results?.paybackMonths, currency })}
 </div>
 
-${pairedTable ? `<h2>Side-by-side by category</h2>${pairedTable}` : ''}
+${pairedTable ? `<h2>Where the savings come from</h2>${pairedTable}` : ''}
 
 <div class="page-break"></div>
 <h2>Cost item breakdown</h2>

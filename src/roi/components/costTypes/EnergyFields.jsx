@@ -19,7 +19,7 @@ export default function EnergyFields({ item, onPatch }) {
         suffix="kg/kWh"
         step="0.05"
       />
-      <Hint>US grid average ≈ 0.40 kg CO₂e/kWh. Use 0 for fully renewable sites. Annual kWh = kW × hours × load factor.</Hint>
+      <Hint>Annual cost = kW × hours × $/kWh × load factor. US grid average CO₂ ≈ 0.40 kg/kWh — use 0 for renewable sites.</Hint>
     </div>
   )
 }
