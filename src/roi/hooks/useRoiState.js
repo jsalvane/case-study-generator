@@ -27,14 +27,14 @@ function sampleState() {
       items: [
         createItem('oneTime',   { label: 'Acquisition cost',      amount: 3500, occursAt: 0, categoryId: 'Acquisition',    sourceNote: 'Competitor quote' }),
         createItem('recurring', { label: 'Repair / rebuild',      amount: 2400, frequency: 'year', timesPerPeriod: 4,      categoryId: 'Maintenance',    sourceNote: '2024 work-order log' }),
-        createItem('downtime',  { label: 'Pump overhaul downtime', eventsPerYear: 2, hoursPerEvent: 16, hourlyRate: 450,   categoryId: 'Downtime',       sourceNote: 'Plant contribution margin' }),
+        createItem('downtime',  { label: 'Pump overhaul downtime', eventsPerYear: 2, hoursPerEvent: 16, hourlyRate: 450,   categoryId: 'Downtime',       sourceNote: 'Lost-production estimate' }),
       ],
     },
     scenarioB: {
       items: [
         createItem('oneTime',   { label: 'Acquisition cost',      amount: 6200, occursAt: 0, isInvestment: true,           categoryId: 'Acquisition',    sourceNote: 'Chesterton quote' }),
-        createItem('recurring', { label: 'Repair / rebuild',      amount: 900, frequency: 'year', timesPerPeriod: 1,       categoryId: 'Maintenance',    sourceNote: 'Field-trial estimate' }),
-        createItem('downtime',  { label: 'Pump overhaul downtime', eventsPerYear: 0.5, hoursPerEvent: 6, hourlyRate: 450,  categoryId: 'Downtime',       sourceNote: 'Field-trial estimate' }),
+        createItem('recurring', { label: 'Repair / rebuild',      amount: 900, frequency: 'year', timesPerPeriod: 1,       categoryId: 'Maintenance',    sourceNote: 'Chesterton field trial' }),
+        createItem('downtime',  { label: 'Pump overhaul downtime', eventsPerYear: 0.5, hoursPerEvent: 6, hourlyRate: 450,  categoryId: 'Downtime',       sourceNote: 'Chesterton field trial' }),
       ],
     },
     notes: '',
