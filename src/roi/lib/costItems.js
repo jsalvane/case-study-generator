@@ -24,7 +24,7 @@ export const COST_TYPES = {
     id: 'downtime',
     label: 'Downtime cost',
     description: 'How much each shutdown event costs.',
-    hint: 'What one hour of downtime costs — lost production $/hr when the line is down, or a labor rate for repair time.',
+    hint: 'What one hour of downtime costs the customer — lost production $/hr when the line is down.',
     defaults: () => ({ eventsPerYear: 0, hoursPerEvent: 0, hourlyRate: 0 }),
   },
   energy: {

@@ -9,7 +9,7 @@ export default function DowntimeFields({ item, onPatch }) {
         <NumberField label="Hours per event" value={item.hoursPerEvent} onChange={v => onPatch({ hoursPerEvent: v })} suffix="hr" />
         <NumberField label="Cost per hour" value={item.hourlyRate} onChange={v => onPatch({ hourlyRate: v })} suffix="$/hr" />
       </div>
-      <Hint>What one hour of downtime costs the customer — lost production $/hr when the line is down, or a loaded labor rate when it's just repair time.</Hint>
+      <Hint>What one hour of downtime costs the customer — lost production $/hr when the line is down.</Hint>
     </div>
   )
 }
