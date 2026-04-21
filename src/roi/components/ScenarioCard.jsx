@@ -7,6 +7,8 @@ import { Button } from '../ui/fields.jsx'
 
 export default function ScenarioCard({
   title, accent = '#6e6e73', scenarioKey, items, mode,
+  currency = 'USD',
+  categorySuggestions = [],
   onUpsert, onRemove, onClone, cloneLabel,
 }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -56,7 +58,14 @@ export default function ScenarioCard({
           </div>
         )}
         {items.map(item => (
-          <CostItemRow key={item.id} item={item} mode={mode} onEdit={() => openEdit(item)} />
+          <CostItemRow
+            key={item.id}
+            item={item}
+            mode={mode}
+            currency={currency}
+            onEdit={() => openEdit(item)}
+            onInlinePatch={(updated) => onUpsert(scenarioKey, updated)}
+          />
         ))}
       </div>
 
@@ -65,11 +74,11 @@ export default function ScenarioCard({
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', background: '#f5f5f7', borderRadius: '10px', padding: '10px 12px' }}>
         <div>
           <div style={{ fontSize: '10px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>One-time</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(oneTime)}</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(oneTime, currency)}</div>
         </div>
         <div>
-          <div style={{ fontSize: '10px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Annual</div>
-          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(yearly)}</div>
+          <div style={{ fontSize: '10px', color: '#6e6e73', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 600 }}>Annual (yr 1)</div>
+          <div style={{ fontSize: '15px', fontWeight: 700, color: '#1c1c1e' }}>{formatCurrency(yearly, currency)}</div>
         </div>
       </div>
 
@@ -79,6 +88,8 @@ export default function ScenarioCard({
         scenarioLabel={title || (scenarioKey === 'scenarioB' ? 'Chesterton' : 'Current')}
         existing={editing}
         mode={mode}
+        currency={currency}
+        categorySuggestions={categorySuggestions}
         onSave={(item) => onUpsert(scenarioKey, item)}
         onDelete={(id) => onRemove(scenarioKey, id)}
         onClose={() => { setDrawerOpen(false); setEditing(null) }}

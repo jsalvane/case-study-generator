@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import FormSection from '../components/FormSection.jsx'
 import useRoiState from './hooks/useRoiState.js'
 import MetaBlock from './components/MetaBlock.jsx'
@@ -11,16 +11,34 @@ import { Button, TextareaField } from './ui/fields.jsx'
 import { computeRoi } from './lib/calc.js'
 import { serializeState, downloadJson, readJsonFile } from './lib/serialize.js'
 import { openPrintReport } from './lib/printReport.js'
+import { buildShareUrl, readShareFromHash, clearShareHash } from './lib/share.js'
 
 export default function RoiApp() {
   const {
-    state, updateMeta, setHorizon, setMode, setElapsed, setNotes,
+    state, canUndo, undo,
+    updateMeta, setHorizon, setMode, setElapsed, setSensitivity, setNotes,
     upsertItem, removeItem, cloneScenario, replaceState, resetState,
   } = useRoiState()
   const [exportOpen, setExportOpen] = useState(false)
   const [importError, setImportError] = useState('')
+  const [banner, setBanner] = useState('')   // top-of-page info banner (share-loaded, etc.)
   const chartRef = useRef(null)
   const fileInputRef = useRef(null)
+
+  // Load state from URL hash (share link), one-time on mount.
+  useEffect(() => {
+    const shared = readShareFromHash()
+    if (shared) {
+      try {
+        replaceState(shared)
+        setBanner('Loaded ROI from share link. Your previous work is preserved in the undo history.')
+        clearShareHash()
+      } catch (e) {
+        setImportError(e.message || 'Could not load share link')
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const results = useMemo(() => computeRoi({
     horizonYears: state.horizonYears,
@@ -28,12 +46,24 @@ export default function RoiApp() {
     scenarioB: state.scenarioB,
     mode: state.mode,
     elapsedMonths: state.elapsedMonths,
+    sensitivity: state.sensitivity,
   }), [state])
 
   const labels = {
     A: state.meta.currentLabel || 'Current',
     B: state.meta.chestertonLabel || 'Chesterton',
   }
+
+  const currency = state.meta.currency || 'USD'
+
+  // Shared category suggestions for the drawer (categoryId pairing between A & B).
+  const categorySuggestions = useMemo(() => {
+    const set = new Set()
+    for (const it of [...state.scenarioA.items, ...state.scenarioB.items]) {
+      if (it.categoryId) set.add(it.categoryId)
+    }
+    return [...set].sort()
+  }, [state.scenarioA.items, state.scenarioB.items])
 
   async function handleSaveJson(anonymize) {
     const payload = serializeState(state, { anonymize })
@@ -51,20 +81,18 @@ export default function RoiApp() {
       horizonYears: state.horizonYears,
       mode: state.mode,
       labels: { A: exportState.meta.currentLabel || 'Current', B: exportState.meta.chestertonLabel || 'Chesterton' },
-      results: {
-        paybackMonths: results.paybackMonths,
-        tcoA: results.tcoA,
-        tcoB: results.tcoB,
-        savings: results.savings,
-        roiPct: results.roiPct,
-        annualizedSavings: results.annualizedSavings,
-        downtimeHoursAvoided: results.downtimeHoursAvoided,
-        chartData: results.chartData,
-      },
+      results,
       scenarioA: exportState.scenarioA,
       scenarioB: exportState.scenarioB,
       anonymized: !!anonymize,
     })
+  }
+
+  async function handleCopyShareLink(anonymize) {
+    const shareState = anonymize
+      ? { ...state, meta: { ...state.meta, customerName: 'Customer A', location: '' } }
+      : state
+    return buildShareUrl(shareState)
   }
 
   async function handleImport(e) {
@@ -95,11 +123,18 @@ export default function RoiApp() {
           </div>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             <input ref={fileInputRef} type="file" accept=".json,.roi.json,application/json" style={{ display: 'none' }} onChange={handleImport} />
+            <Button variant="secondary" onClick={undo} disabled={!canUndo} title={canUndo ? 'Undo last structural change' : 'Nothing to undo'}>↶ Undo</Button>
             <Button variant="secondary" onClick={() => fileInputRef.current?.click()}>Import .roi.json</Button>
             <Button variant="secondary" onClick={resetState}>Reset</Button>
-            <Button onClick={() => setExportOpen(true)}>Save / Export</Button>
+            <Button onClick={() => setExportOpen(true)}>Save / Share</Button>
           </div>
         </div>
+        {banner && (
+          <div style={{ background: 'rgba(21,128,61,0.08)', color: '#15803d', padding: '10px 12px', borderRadius: '10px', fontSize: '12px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+            <span>{banner}</span>
+            <button onClick={() => setBanner('')} style={{ background: 'transparent', border: 'none', color: '#15803d', cursor: 'pointer', fontSize: '14px', fontWeight: 700 }}>×</button>
+          </div>
+        )}
         {importError && (
           <div style={{ background: '#fdf0f2', color: '#c8102e', padding: '10px 12px', borderRadius: '10px', fontSize: '12px' }}>{importError}</div>
         )}
@@ -108,7 +143,7 @@ export default function RoiApp() {
           <MetaBlock meta={state.meta} onChange={updateMeta} />
         </FormSection>
 
-        <FormSection step={2} title="Horizon & mode" description="Projected for hypothetical ROI, Tracked to log actuals over time.">
+        <FormSection step={2} title="Horizon, mode & sensitivity" description="Projected for hypothetical ROI, Tracked for actuals to date. Sensitivity scales Chesterton's advantage.">
           <ModeToggle
             mode={state.mode}
             onMode={setMode}
@@ -116,10 +151,12 @@ export default function RoiApp() {
             onHorizon={setHorizon}
             elapsedMonths={state.elapsedMonths}
             onElapsed={setElapsed}
+            sensitivity={state.sensitivity}
+            onSensitivity={setSensitivity}
           />
         </FormSection>
 
-        <FormSection step={3} title="Cost scenarios" description="Add one-time, recurring, consumption, and downtime costs to each side.">
+        <FormSection step={3} title="Cost scenarios" description="Tag items with a shared category to pair them A ↔ B in the PDF.">
           <div className="roi-scenarios" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
             <ScenarioCard
               title={labels.A}
@@ -127,6 +164,8 @@ export default function RoiApp() {
               scenarioKey="scenarioA"
               items={state.scenarioA.items}
               mode={state.mode}
+              currency={currency}
+              categorySuggestions={categorySuggestions}
               onUpsert={upsertItem}
               onRemove={removeItem}
               onClone={() => cloneScenario('scenarioB', 'scenarioA')}
@@ -138,6 +177,8 @@ export default function RoiApp() {
               scenarioKey="scenarioB"
               items={state.scenarioB.items}
               mode={state.mode}
+              currency={currency}
+              categorySuggestions={categorySuggestions}
               onUpsert={upsertItem}
               onRemove={removeItem}
               onClone={() => cloneScenario('scenarioA', 'scenarioB')}
@@ -147,7 +188,7 @@ export default function RoiApp() {
         </FormSection>
 
         <FormSection step={4} title="Results" description="Cumulative cost comparison across the horizon.">
-          <ResultsPanel ref={chartRef} results={results} labels={labels} mode={state.mode} />
+          <ResultsPanel ref={chartRef} results={results} labels={labels} mode={state.mode} currency={currency} />
         </FormSection>
 
         <FormSection step={5} title="Notes" description="Caveats, assumptions, or context for the reader.">
@@ -161,7 +202,7 @@ export default function RoiApp() {
       </div>
 
       <div className="roi-sticky-mobile-only">
-        <MobileResultsSticky results={results} />
+        <MobileResultsSticky results={results} labels={labels} currency={currency} />
       </div>
 
       <ExportModal
@@ -169,6 +210,7 @@ export default function RoiApp() {
         onClose={() => setExportOpen(false)}
         onExportPdf={handleExportPdf}
         onSaveJson={handleSaveJson}
+        onCopyShareLink={handleCopyShareLink}
       />
     </>
   )
